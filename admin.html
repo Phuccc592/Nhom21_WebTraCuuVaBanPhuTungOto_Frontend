@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Weboto</title>
+    <style>
+        body { display: flex; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; }
+        .sidebar { width: 260px; background: #2c3e50; color: white; height: 100vh; padding: 20px; position: fixed; box-sizing: border-box; z-index: 100;}
+        .sidebar h3 { text-align: center; border-bottom: 1px solid #34495e; padding-bottom: 15px; margin-bottom: 20px; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar li { padding: 15px; cursor: pointer; border-radius: 5px; margin-bottom: 5px; transition: 0.3s; }
+        .sidebar li:hover { background: #34495e; padding-left: 20px; }
+        .sidebar li.active-menu { background: #3498db; }
+        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; }
+        .card-admin { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; color: #333; }
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-submit { background: #3498db; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-submit:hover { background: #2980b9; }
+        .btn-action { padding: 8px 15px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; margin-right: 5px;}
+        .btn-ban { background: #e74c3c; }
+        .btn-unban { background: #2ecc71; }
+        .status-active { color: #2ecc71; font-weight: bold; }
+        .status-locked { color: #e74c3c; font-weight: bold; }
+        .edit-mode { border: 2px solid #f1c40f !important; background: #fffdf0; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h3>ADMIN PANEL</h3>
+    <ul>
+        <li onclick="window.location.href='index.html'" style="background: #34495e; margin-bottom: 15px; border-left: 4px solid #fbc02d;">🏠 Về Trang Chủ</li>
+        <li onclick="showTab('user-tab', this)" class="active-menu">Quản lý User</li>
+        <li onclick="showTab('brand-tab', this)">Hãng xe</li>
+        <li onclick="showTab('model-tab', this)">Dòng xe</li>
+        <li onclick="showTab('year-tab', this)">Đời xe</li>
+        <li onclick="showTab('cat-tab', this)">Danh mục</li>
+        <li onclick="showTab('part-tab', this)">Phụ tùng</li>
+        <li onclick="showTab('compat-tab', this)">Thiết lập Đời xe</li>
+        <li onclick="logout()" style="color: #e74c3c; font-weight: bold; margin-top: 30px; border-top: 1px solid #34495e; padding-top: 20px;">Đăng xuất</li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div id="user-tab" class="tab-content active">
+        <h2>Quản lý Người dùng</h2>
+        <div class="card-admin">
+            <table>
+                <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+                <tbody id="userList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="brand-tab" class="tab-content">
+        <h2>Quản lý Hãng xe</h2>
+        <div class="card-admin" id="brandFormContainer">
+            <h3 id="brandTitle">Tạo Hãng xe mới</h3>
+            <input type="hidden" id="brandId">
+            <label>Tên hãng xe:</label><input type="text" id="brandName">
+            <label>Logo URL:</label><input type="text" id="brandLogo">
+            <button class="btn-submit" onclick="createOrUpdateBrand()">Lưu hãng xe</button>
+            <button id="btnCancelBrand" style="display:none; background:#95a5a6;" class="btn-action" onclick="resetBrandForm()">Hủy</button>
+        </div>
+        <div class="card-admin">
+            <table>
+                <thead><tr><th>ID</th><th>Tên Hãng</th><th>Thao tác</th></tr></thead>
+                <tbody id="adminBrandList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="model-tab" class="tab-content">
+        <h2>Quản lý Dòng xe</h2>
+        <div class="card-admin">
+            <h3 id="modelTitle">Tạo Dòng xe mới</h3>
+            <input type="hidden" id="modelId">
+            <label>Tên dòng xe:</label><input type="text" id="modelName">
+            <label>Chọn Hãng xe:</label><select id="modelBrandId"></select>
+            <button class="btn-submit" onclick="createOrUpdateModel()">Lưu dòng xe</button>
+            <button id="btnCancelModel" style="display:none; background:#95a5a6;" class="btn-action" onclick="resetModelForm()">Hủy</button>
+        </div>
+        <div class="card-admin">
+            <table>
+                <thead><tr><th>ID</th><th>Dòng xe</th><th>Hãng</th><th>Thao tác</th></tr></thead>
+                <tbody id="adminModelList"></tbody>
+            </table>
+        </div>
+    </div>
+
+<div id="year-tab" class="tab-content">
+    <h2>Quản lý Đời xe</h2>
+    <div class="card-admin">
+        <h3 id="yearTitle">Tạo Đời xe mới</h3>
+        <input type="hidden" id="yearId">
+        <label>Năm sản xuất:</label><input type="number" id="yearNumber">
+        
+        <label>Chọn Hãng xe (để lọc dòng xe):</label>
+        <select id="yearBrandId" onchange="loadModelsToSelect(this.value, 'yearModelId')">
+            <option value="">-- Chọn hãng --</option>
+        </select>
+        
+        <label>Chọn Dòng xe:</label>
+        <select id="yearModelId">
+            <option value="">-- Chọn hãng trước --</option>
+        </select>
+        
+        <button class="btn-submit" onclick="createOrUpdateYear()">Lưu đời xe</button>
+        <button id="btnCancelYear" style="display:none; background:#95a5a6;" class="btn-action" onclick="resetYearForm()">Hủy</button>
+    </div>
+
+    <div class="card-admin">
+        <table>
+            <thead><tr><th>ID</th><th>Năm</th><th>Thao tác</th></tr></thead>
+            <tbody id="adminYearList"></tbody>
+        </table>
+    </div>
+</div>
+
+    <div id="cat-tab" class="tab-content">
+        <h2>Quản lý Danh mục</h2>
+        <div class="card-admin">
+            <h3 id="catTitle">Tạo Danh mục mới</h3>
+            <input type="hidden" id="catId">
+            <label>Tên danh mục:</label><input type="text" id="catName">
+            <label>Mô tả chi tiết:</label><textarea id="catDesc"></textarea>
+            <button class="btn-submit" onclick="createOrUpdateCategory()">Lưu danh mục</button>
+            <button id="btnCancelCat" style="display:none; background:#95a5a6;" class="btn-action" onclick="resetCatForm()">Hủy</button>
+        </div>
+        <div class="card-admin">
+            <table>
+                <thead><tr><th>ID</th><th>Tên</th><th>Mô tả</th><th>Thao tác</th></tr></thead>
+                <tbody id="adminCatList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="part-tab" class="tab-content">
+        <h2>Quản lý Phụ tùng</h2>
+        <div class="card-admin" id="partForm">
+            <h3 id="formTitle">Tạo Phụ tùng mới</h3>
+            <input type="hidden" id="pId">
+            <label>Tên phụ tùng:</label><input type="text" id="pName">
+            <label>Mã SKU:</label><input type="text" id="pSku">
+            <label>Giá bán (VNĐ):</label><input type="number" id="pPrice">
+            <label>Số lượng tồn kho:</label><input type="number" id="pQty">
+            <label>URL Hình ảnh:</label><input type="text" id="pImg">
+            <label>Mô tả:</label><textarea id="pDesc"></textarea>
+            <label>Chọn Danh mục:</label><select id="pCatId"></select>
+            <button class="btn-submit" onclick="createOrUpdatePart()">Lưu phụ tùng</button>
+            <button id="btnCancelEdit" style="display:none; background:#95a5a6;" class="btn-action" onclick="resetPartForm()">Hủy</button>
+        </div>
+        <div class="card-admin">
+            <table>
+                <thead><tr><th>SKU</th><th>Tên</th><th>Giá</th><th>Kho</th><th>Thao tác</th></tr></thead>
+                <tbody id="adminPartList"></tbody>
+            </table>
+        </div>
+    </div>
+
+<div id="compat-tab" class="tab-content">
+    <h2>Thiết lập Tương thích</h2>
+    <div class="card-admin">
+        <label>Chọn Phụ tùng:</label>
+        <select id="compatPartId"></select>
+
+        <label>Chọn Hãng:</label>
+        <select id="compatBrandId" onchange="loadModelsToSelect(this.value, 'compatModelId')">
+            <option value="">-- Chọn hãng --</option>
+        </select>
+
+        <label>Chọn Dòng:</label>
+        <select id="compatModelId" onchange="loadYearsToSelect(this.value, 'compatYearId')">
+            <option value="">-- Chọn dòng --</option>
+        </select>
+
+        <label>Chọn Đời:</label>
+        <select id="compatYearId">
+            <option value="">-- Chọn đời xe --</option>
+        </select>
+
+        <button class="btn-submit" onclick="setupCompatibility()">Thiết lập</button>
+    </div>
+</div>
+</div>
+
+<script>
+    const API_BASE = "http://localhost:8080/api/v1/admin";
+    const API_PUBLIC = "http://localhost:8080/api/v1";
+    const token = localStorage.getItem('accessToken');
+    let globalBrands = [];
+window.onload = () => {
+    if (!token) window.location.href = 'login.html';
+    fetchUsers();
+    
+    // Nạp Hãng xe cho TẤT CẢ các dropdown ở các Tab khác nhau
+    loadBrandsToSelect('modelBrandId');     // Tab Dòng xe
+    loadBrandsToSelect('yearBrandId');      // Tab Đời xe
+    loadBrandsToSelect('compatBrandId');    // Tab Thiết lập tương thích
+    
+    loadCategoriesToSelect(); // Nạp danh mục cho tab Phụ tùng
+    loadPartsToSelect();      // Nạp phụ tùng cho tab Thiết lập
+    loadAllAdminTables();     // Tải dữ liệu cho các bảng danh sách
+};
+
+    function showTab(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active-menu'));
+        element.classList.add('active-menu');
+    }
+
+    async function callApi(url, method = 'GET', body = null) {
+        const options = { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }};
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(url, options);
+        if (response.status === 403) alert("Không có quyền Admin!");
+        return response;
+    }
+    async function createOrUpdateModel() {
+    const id = document.getElementById('modelId').value;
+    const body = {
+        name: document.getElementById('modelName').value,
+        brandId: document.getElementById('modelBrandId').value
+    };
+    
+    const url = id ? `${API_BASE}/models/${id}` : `${API_BASE}/models`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await callApi(url, method, body);
+    if (res.ok) {
+        alert("Thành công!");
+        resetModelForm();
+        loadAdminModelTable();
+    }
+}
+    // --- LOAD TABLES ---
+    async function loadAllAdminTables() {
+        await loadAdminBrandTable();
+        loadAdminModelTable();
+        loadAdminYearTable();
+        loadAdminCatTable();
+        loadAdminPartTable();
+    }
+
+    async function loadAdminPartTable() {
+        const res = await fetch(`${API_PUBLIC}/parts/search`);
+        const parts = await res.json();
+        let html = '';
+        parts.forEach(p => {
+            const stockStyle = p.stockQuantity <= 0 ? 'color:red; font-weight:bold;' : '';
+            html += `<tr><td>${p.sku}</td><td>${p.name}</td><td>${p.price.toLocaleString()}</td>
+                <td style="${stockStyle}">${p.stockQuantity <= 0 ? 'HẾT HÀNG' : p.stockQuantity}</td>
+                <td><button class="btn-action btn-unban" onclick='editPart(${JSON.stringify(p)})'>Sửa</button>
+                <button class="btn-action btn-ban" onclick="deletePart(${p.id})">Xóa</button></td></tr>`;
+        });
+        document.getElementById('adminPartList').innerHTML = html;
+    }
+
+async function loadAdminBrandTable() {
+    try {
+        const res = await fetch(`${API_PUBLIC}/brands`);
+        globalBrands = await res.json(); // Lưu dữ liệu vào biến toàn cục
+        
+        let html = '';
+        globalBrands.forEach(b => {
+            const bJson = JSON.stringify(b).replace(/'/g, "\\'");
+            html += `<tr><td>${b.id}</td><td>${b.name}</td>
+                <td><button class="btn-action btn-unban" onclick='editBrand(${bJson})'>Sửa</button>
+                <button class="btn-action btn-ban" onclick="deleteBrand(${b.id})">Xóa</button></td></tr>`;
+        });
+        document.getElementById('adminBrandList').innerHTML = html;
+        
+        // QUAN TRỌNG: Sau khi hãng xe tải xong, mới cho phép load bảng Dòng xe
+        loadAdminModelTable(); 
+    } catch (e) { console.error("Lỗi load hãng xe:", e); }
+}
+
+async function loadAdminModelTable() {
+    try {
+        const res = await fetch(`${API_PUBLIC}/models`); 
+        if(!res.ok) return;
+        const models = await res.json();
+        
+        let html = '';
+        models.forEach(m => {
+            // Tìm tên hãng trong danh sách đã tải
+            const brandObj = globalBrands.find(b => b.id === m.brandId);
+            const brandDisp = brandObj ? brandObj.name : `Hãng ID: ${m.brandId}`;
+            
+            const mJson = JSON.stringify(m).replace(/'/g, "\\'");
+            
+            html += `<tr>
+                <td>${m.id}</td>
+                <td>${m.name || m.modelName}</td>
+                <td>${brandDisp}</td>
+                <td><button class="btn-action btn-unban" onclick='editModel(${mJson})'>Sửa</button></td>
+            </tr>`;
+        });
+        document.getElementById('adminModelList').innerHTML = html;
+    } catch (e) { console.error("Lỗi load dòng xe:", e); }
+}
+
+    async function loadAdminYearTable() {
+        const res = await fetch(`${API_PUBLIC}/model-years`); // Giả định API này tồn tại
+        if(!res.ok) return;
+        const years = await res.json();
+        let html = '';
+        years.forEach(y => {
+            html += `<tr><td>${y.id}</td><td>${y.yearNumber}</td>
+                <td><button class="btn-action btn-unban" onclick='editYear(${JSON.stringify(y)})'>Sửa</button></td></tr>`;
+        });
+        document.getElementById('adminYearList').innerHTML = html;
+    }
+
+    async function loadAdminCatTable() {
+        const res = await fetch(`${API_PUBLIC}/categories`);
+        const cats = await res.json();
+        let html = '';
+        cats.forEach(c => {
+            html += `<tr><td>${c.id}</td><td>${c.name}</td><td>${c.description || ''}</td>
+                <td><button class="btn-action btn-unban" onclick='editCat(${JSON.stringify(c)})'>Sửa</button></td></tr>`;
+        });
+        document.getElementById('adminCatList').innerHTML = html;
+    }
+
+    // --- CẬP NHẬT PHỤ TÙNG (POST / PUT) ---
+    async function createOrUpdatePart() {
+        const id = document.getElementById('pId').value;
+        const body = {
+            name: document.getElementById('pName').value, sku: document.getElementById('pSku').value,
+            price: document.getElementById('pPrice').value, stockQuantity: document.getElementById('pQty').value,
+            imageUrl: document.getElementById('pImg').value, description: document.getElementById('pDesc').value,
+            categoryId: document.getElementById('pCatId').value
+        };
+        const res = await callApi(id ? `${API_BASE}/parts/${id}` : `${API_BASE}/parts`, id ? 'PUT' : 'POST', body);
+        if (res.ok) { alert("Thành công!"); resetPartForm(); loadAdminPartTable(); }
+    }
+
+    async function deletePart(id) {
+        if(confirm("Xác nhận xóa?")) {
+            const res = await callApi(`${API_BASE}/parts/${id}`, 'DELETE');
+            if(res.ok) loadAdminPartTable();
+        }
+    }
+
+    // --- CẬP NHẬT HÃNG XE (POST / PUT) ---
+    async function createOrUpdateBrand() {
+        const id = document.getElementById('brandId').value;
+        const body = { name: document.getElementById('brandName').value, logoUrl: document.getElementById('brandLogo').value };
+        const res = await callApi(id ? `${API_BASE}/brands/${id}` : `${API_BASE}/brands`, id ? 'PUT' : 'POST', body);
+        if(res.ok) { alert("Thành công!"); resetBrandForm(); loadAdminBrandTable(); refreshAllDropdowns(); }
+    }
+
+    async function deleteBrand(id) {
+        if(confirm("Xác nhận xóa hãng?")) {
+            const res = await callApi(`${API_BASE}/brands/${id}`, 'DELETE');
+            if(res.ok) loadAdminBrandTable();
+        }
+    }
+
+    // --- EDIT FUNCTIONS ---
+    function editPart(p) {
+        document.getElementById('pId').value = p.id;
+        document.getElementById('pName').value = p.name;
+        document.getElementById('pSku').value = p.sku;
+        document.getElementById('pPrice').value = p.price;
+        document.getElementById('pQty').value = p.stockQuantity;
+        document.getElementById('pImg').value = p.imageUrl;
+        document.getElementById('pDesc').value = p.description;
+        document.getElementById('pCatId').value = p.categoryId || "";
+        document.getElementById('formTitle').innerText = "Chỉnh sửa phụ tùng";
+        document.getElementById('btnCancelEdit').style.display = 'inline-block';
+        window.scrollTo(0,0);
+    }
+
+    function editBrand(b) {
+        document.getElementById('brandId').value = b.id;
+        document.getElementById('brandName').value = b.name;
+        document.getElementById('brandLogo').value = b.logoUrl || "";
+        document.getElementById('brandTitle').innerText = "Chỉnh sửa Hãng xe";
+        document.getElementById('btnCancelBrand').style.display = 'inline-block';
+    }
+
+    function resetPartForm() {
+        document.getElementById('pId').value = "";
+        document.getElementById('partForm').querySelectorAll('input, textarea').forEach(i => i.value = "");
+        document.getElementById('formTitle').innerText = "Tạo Phụ tùng mới";
+        document.getElementById('btnCancelEdit').style.display = 'none';
+    }
+
+    function resetBrandForm() {
+        document.getElementById('brandId').value = "";
+        document.getElementById('brandName').value = "";
+        document.getElementById('brandLogo').value = "";
+        document.getElementById('brandTitle').innerText = "Tạo Hãng xe mới";
+        document.getElementById('btnCancelBrand').style.display = 'none';
+    }
+
+    // --- REFRESH DROPDOWNS ---
+    async function refreshAllDropdowns() {
+        loadBrandsToSelect('modelBrandId');
+        loadBrandsToSelect('yearBrandId');
+        loadBrandsToSelect('compatBrandId');
+        loadCategoriesToSelect();
+        loadPartsToSelect();
+    }
+
+    // --- RENDER DROPDOWNS (Giữ nguyên các hàm cũ của bạn) ---
+    async function loadBrandsToSelect(id) {
+        const res = await fetch(`${API_PUBLIC}/brands`);
+        const data = await res.json();
+        const select = document.getElementById(id);
+        if(!select) return;
+        select.innerHTML = '<option value="">-- Chọn hãng --</option>';
+        data.forEach(b => select.innerHTML += `<option value="${b.id}">${b.name}</option>`);
+    }
+
+async function loadModelsToSelect(brandId, selectId) {
+    if (!brandId) return;
+    const res = await fetch(`${API_PUBLIC}/brands/${brandId}/models`);
+    const data = await res.json();
+    const select = document.getElementById(selectId);
+    select.innerHTML = '<option value="">-- Chọn dòng --</option>';
+    data.forEach(m => {
+        // Căn cứ log: dùng m.name thay vì m.modelName
+        select.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+    });
+}
+
+    async function loadYearsToSelect(modelId, selectId) {
+        if (!modelId) return;
+        const res = await fetch(`${API_PUBLIC}/models/${modelId}/years`);
+        const data = await res.json();
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">-- Chọn đời --</option>';
+        data.forEach(y => select.innerHTML += `<option value="${y.id}">${y.yearNumber}</option>`);
+    }
+
+    async function loadCategoriesToSelect() {
+        const res = await fetch(`${API_PUBLIC}/categories`);
+        const data = await res.json();
+        document.getElementById('pCatId').innerHTML = '<option value="">-- Chọn danh mục --</option>' + 
+            data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    async function loadPartsToSelect() {
+        const res = await callApi(`${API_BASE}/parts`);
+        const data = await res.json();
+        document.getElementById('compatPartId').innerHTML = '<option value="">-- Chọn phụ tùng --</option>' + 
+            data.map(p => `<option value="${p.id}">${p.name} (${p.sku})</option>`).join('');
+    }
+
+async function fetchUsers() {
+    const res = await callApi(`${API_BASE}/users`);
+    if (res.ok) {
+        const users = await res.json();
+        let html = '';
+        users.forEach(u => {
+            // KIỂM TRA ĐA LUỒNG: Thử tất cả các tên biến phổ biến từ Spring Boot
+            const isActive = (u.is_active == 1 || u.is_active === true || u.isActive === true || u.enabled === true);
+            
+            html += `<tr>
+                <td>${u.id}</td>
+                <td>${u.username}</td>
+                <td>${u.email}</td>
+                <td><span class="${isActive ? 'status-active' : 'status-locked'}">${isActive ? 'Đang hoạt động' : 'Bị chặn'}</span></td>
+                <td><button class="btn-action ${isActive ? 'btn-ban' : 'btn-unban'}" onclick="toggleUser(${u.id}, ${isActive ? 0 : 1})">${isActive ? 'Khóa' : 'Mở'}</button></td>
+            </tr>`;
+        });
+        document.getElementById('userList').innerHTML = html;
+    }
+}
+// --- HÀM SỬA DÒNG XE ---
+function editModel(m) {
+    document.getElementById('modelId').value = m.id;
+    document.getElementById('modelName').value = m.name; // Dùng m.name
+    document.getElementById('modelBrandId').value = m.brandId;
+    
+    document.getElementById('modelTitle').innerText = "Chỉnh sửa Dòng xe ID: " + m.id;
+    document.getElementById('btnCancelModel').style.display = 'inline-block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// --- HÀM SỬA ĐỜI XE ---
+function editYear(y) {
+    document.getElementById('yearId').value = y.id;
+    document.getElementById('yearNumber').value = y.yearNumber;
+    // Lưu ý: Phải load đúng modelId vào dropdown
+    document.getElementById('yearModelId').value = y.modelId || "";
+    
+    document.getElementById('yearTitle').innerText = "Chỉnh sửa Đời xe ID: " + y.id;
+    document.getElementById('btnCancelYear').style.display = 'inline-block';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Bổ sung các hàm reset để thoát chế độ sửa
+function resetModelForm() {
+    document.getElementById('modelId').value = "";
+    document.getElementById('modelName').value = "";
+    document.getElementById('modelTitle').innerText = "Tạo Dòng xe mới";
+    document.getElementById('btnCancelModel').style.display = 'none';
+}
+
+function resetYearForm() {
+    document.getElementById('yearId').value = "";
+    document.getElementById('yearNumber').value = "";
+    document.getElementById('yearTitle').innerText = "Tạo Đời xe mới";
+    document.getElementById('btnCancelYear').style.display = 'none';
+}
+// Thay thế hoặc thêm hàm này vào Script
+async function createOrUpdateCategory() {
+    const id = document.getElementById('catId').value;
+    const body = { 
+        name: document.getElementById('catName').value, 
+        description: document.getElementById('catDesc').value 
+    };
+    
+    // Nếu có ID thì dùng PUT để cập nhật, không thì dùng POST để tạo mới
+    const url = id ? `${API_BASE}/categories/${id}` : `${API_BASE}/categories`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await callApi(url, method, body);
+    if (res.ok) { 
+        alert("Lưu danh mục thành công!"); 
+        resetCatForm(); 
+        loadAdminCatTable(); 
+        loadCategoriesToSelect(); // Cập nhật lại dropdown danh mục ở tab Phụ tùng
+    }
+}
+async function createOrUpdateYear() {
+    const id = document.getElementById('yearId').value;
+    const body = {
+        yearNumber: document.getElementById('yearNumber').value,
+        modelId: document.getElementById('yearModelId').value // Khớp với ModelYearDTO.java
+    };
+    
+    const url = id ? `${API_BASE}/model-years/${id}` : `${API_BASE}/model-years`;
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await callApi(url, method, body);
+    if (res.ok) {
+        alert("Thành công!");
+        resetYearForm();
+        loadAdminYearTable();
+    }
+}
+
+// Thêm hàm sửa và reset cho Danh mục
+function editCat(c) {
+    document.getElementById('catId').value = c.id;
+    document.getElementById('catName').value = c.name;
+    document.getElementById('catDesc').value = c.description || "";
+    document.getElementById('catTitle').innerText = "Chỉnh sửa danh mục: " + c.name;
+    document.getElementById('btnCancelCat').style.display = 'inline-block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetCatForm() {
+    document.getElementById('catId').value = "";
+    document.getElementById('catName').value = "";
+    document.getElementById('catDesc').value = "";
+    document.getElementById('catTitle').innerText = "Tạo Danh mục mới";
+    document.getElementById('btnCancelCat').style.display = 'none';
+}
+async function setupCompatibility() {
+    const pId = document.getElementById('compatPartId').value;
+    const yId = document.getElementById('compatYearId').value;
+
+    if (!pId || !yId) {
+        alert("Vui lòng chọn đầy đủ phụ tùng và đời xe!");
+        return;
+    }
+
+    try {
+        // Khớp với API Postman của bạn: POST /api/v1/admin/parts/{id}/compatibility
+        const res = await callApi(`${API_BASE}/parts/${pId}/compatibility?modelYearId=${yId}`, 'POST');
+        if (res.ok) {
+            alert("✅ Thiết lập tương thích thành công!");
+        } else {
+            const errorText = await res.text();
+            alert("❌ Lỗi: " + errorText);
+        }
+    } catch (e) {
+        console.error("Lỗi thiết lập:", e);
+        alert("🌐 Lỗi kết nối server!");
+    }
+}
+    async function toggleUser(id, st) { if(await callApi(`${API_BASE}/users/${id}/status?status=${st}`, 'PUT')) fetchUsers(); }
+
+    function logout() { localStorage.removeItem('accessToken'); window.location.href = 'login.html'; }
+</script>
+</body>
+</html>

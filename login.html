@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weboto - Đăng nhập</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        h2 { color: #333; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s; }
+        button:hover { background-color: #218838; }
+        #message { margin-top: 15px; font-size: 0.9rem; min-height: 1.2rem; }
+        .error { color: #dc3545; }
+        .success { color: #28a745; }
+        .signup-link { margin-top: 15px; font-size: 0.85rem; color: #666; }
+        .signup-link a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Weboto Login</h2>
+    <input type="text" id="username" placeholder="Tên đăng nhập">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button onclick="login()">ĐĂNG NHẬP</button>
+    <div id="message"></div>
+    <div class="signup-link">
+        Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/api/v1";
+
+    async function login() {
+        const userInp = document.getElementById('username').value;
+        const passInp = document.getElementById('password').value;
+        const msgDiv = document.getElementById('message');
+
+        if (!userInp || !passInp) {
+            showMessage("Vui lòng nhập đủ thông tin", "error");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: userInp, password: passInp })
+            });
+
+            const text = await response.text();
+            let data;
+            try { data = JSON.parse(text); } catch (e) { data = { message: text }; }
+
+            if (response.ok) {
+                localStorage.setItem('accessToken', data.accessToken);
+                
+                // Giải mã Role từ JWT
+                const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+                // Kiểm tra nhiều trường phổ biến của JWT (roles, auth, authorities)
+                let roles = payload.roles || payload.auth || payload.authorities || [];
+                if (typeof roles === 'string') roles = [roles];
+
+                localStorage.setItem('userRole', JSON.stringify(roles));
+                showMessage("Đăng nhập thành công! Đang chuyển hướng...", "success");
+
+                setTimeout(() => {
+                    const isAdmin = roles.some(r => r === 'ROLE_ADMIN' || r === 'ADMIN');
+                    window.location.href = isAdmin ? 'admin.html' : 'index.html';
+                }, 1000);
+            } else {
+                showMessage(data.message || "Sai tài khoản hoặc mật khẩu", "error");
+            }
+        } catch (err) {
+            showMessage("Lỗi kết nối Server", "error");
+        }
+    }
+
+    function showMessage(text, type) {
+        const div = document.getElementById('message');
+        div.innerText = text;
+        div.className = type;
+    }
+</script>
+</body>
+</html>

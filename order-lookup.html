@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Tra cứu đơn hàng - Weboto</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .lookup-container { max-width: 600px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .lookup-header { text-align: center; margin-bottom: 25px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="number"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .btn-lookup { background: #fbc02d; color: #222; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .order-result { border-top: 2px solid #fbc02d; padding-top: 20px; display: none; }
+        .result-item { margin-bottom: 12px; font-size: 1.1rem; }
+        .label { font-weight: bold; color: #666; width: 120px; display: inline-block; }
+        .status-badge { background: #eee; padding: 4px 10px; border-radius: 4px; font-size: 0.9rem; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <a href="index.html" style="text-decoration: none; color: #007bff;">← Quay lại cửa hàng</a>
+            <h1>Đơn Hàng</h1>
+        </header>
+
+        <div class="lookup-container">
+            <div class="lookup-header">
+                <h2>Tra cứu chi tiết đơn hàng</h2>
+                <p>Nhập mã đơn hàng của bạn để kiểm tra trạng thái và thông tin vận chuyển.</p>
+            </div>
+
+            <div class="input-group">
+                <input type="number" id="orderId" placeholder="Mã đơn hàng (VD: 1, 2, 3...)">
+                <button class="btn-lookup" onclick="lookupOrder()">Tra cứu ngay</button>
+            </div>
+
+            <div id="orderResult" class="order-result">
+                <div class="result-item"><span class="label">Mã đơn:</span> <span id="resId"></span></div>
+                <div class="result-item"><span class="label">Địa chỉ nhận:</span> <span id="resAddress"></span></div>
+                <div class="result-item"><span class="label">Tổng tiền:</span> <span id="resTotal" style="color: red; font-weight: bold;"></span></div>
+                <div class="result-item"><span class="label">Trạng thái:</span> <span id="resStatus" class="status-badge"></span></div>
+            </div>
+            <p id="errorMsg" style="color: red; text-align: center; display: none;"></p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8080/api/v1";
+        const token = localStorage.getItem('accessToken');
+
+        async function lookupOrder() {
+            const orderId = document.getElementById('orderId').value;
+            const resultDiv = document.getElementById('orderResult');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (!orderId) {
+                alert("Vui lòng nhập mã đơn hàng!");
+                return;
+            }
+
+            if (!token) {
+                alert("Vui lòng đăng nhập để thực hiện tra cứu!");
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Reset trạng thái
+            resultDiv.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/orders/${orderId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const order = await res.json();
+                    
+                    document.getElementById('resId').innerText = `#${order.id}`;
+                    document.getElementById('resAddress').innerText = order.address;
+                    document.getElementById('resTotal').innerText = `${order.totalAmount.toLocaleString()} VNĐ`;
+                    document.getElementById('resStatus').innerText = order.status;
+
+                    resultDiv.style.display = 'block';
+                } else {
+                    errorMsg.innerText = "Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn này!";
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.innerText = "Lỗi kết nối đến máy chủ. Vui lòng thử lại sau.";
+                errorMsg.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

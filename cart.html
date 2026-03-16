@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Giỏ hàng - WEBOTO</title>
+<style>
+    * { box-sizing: border-box; }
+    body { 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        margin: 0; padding: 0; background-color: #f4f4f9; color: #333; line-height: 1.6;
+    }
+
+    /* Header đồng bộ Index */
+    header { 
+        background: #2c3e50; color: white; padding: 1rem 5%; 
+        display: flex; justify-content: space-between; align-items: center;
+        position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+    nav a { color: white; text-decoration: none; margin-left: 20px; font-weight: 500; font-size: 0.95rem; transition: 0.3s; }
+    nav a:hover { color: #3498db; }
+
+    .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+
+    /* Card bao ngoài */
+    .cart-card { 
+        background: white; padding: 30px; border-radius: 12px; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 30px;
+    }
+    h2 { color: #2c3e50; font-size: 1.5rem; margin-top: 0; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+
+    /* Bảng sản phẩm */
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8f9fa; padding: 15px; text-align: left; font-size: 0.8rem; color: #7f8c8d; text-transform: uppercase; border-bottom: 2px solid #edf2f7; }
+    td { padding: 20px 15px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+    
+    .item-checkbox { transform: scale(1.3); cursor: pointer; accent-color: #3498db; }
+    .product-name { font-weight: 600; color: #2d3436; font-size: 1rem; }
+    input[type="number"] { width: 65px; padding: 8px; border: 1.5px solid #dcdde1; border-radius: 6px; text-align: center; font-weight: bold; }
+
+    /* Tổng tiền nổi bật */
+    .summary-section { text-align: right; padding: 20px 0; border-top: 2px solid #edf2f7; margin-top: 10px; }
+    .total-price { color: #e74c3c; font-weight: 800; font-size: 1.8rem; }
+
+    /* Form giao hàng chuyên nghiệp */
+    .checkout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-weight: 600; color: #4a5568; font-size: 0.9rem; }
+    .form-control { 
+        padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 8px; 
+        font-size: 0.95rem; transition: 0.3s; background: #f8fafc;
+    }
+    .form-control:focus { outline: none; border-color: #3498db; background: white; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+
+    /* Nút bấm */
+    .btn-pay { 
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); 
+        color: white; border: none; padding: 18px; border-radius: 10px; 
+        width: 100%; font-size: 1.1rem; font-weight: 700; cursor: pointer; 
+        margin-top: 25px; transition: 0.3s; box-shadow: 0 10px 20px rgba(46,204,113,0.2);
+    }
+    .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(46,204,113,0.3); }
+
+    .btn-remove { background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-remove:hover { background: #ef4444; color: white; }
+
+    /* Lịch sử đơn hàng */
+    .order-card { 
+        background: white; border: 1px solid #e2e8f0; padding: 18px; border-radius: 10px; 
+        margin-bottom: 12px; display: flex; justify-content: space-between; 
+        align-items: center; transition: 0.3s;
+    }
+    .order-card:hover { border-color: #3498db; transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<header>
+    <h1>WEBOTO</h1>
+    <nav>
+        <a href="index.html">🏠 Trang chủ</a>
+        <a href="cart.html">🛒 Giỏ hàng (<span id="cartCount">0</span>)</a>
+        <a href="profile.html">👤 Cá nhân</a>
+    </nav>
+</header>
+<div class="container">
+    <div class="cart-card">
+        <h2>🛒 Giỏ Hàng Của Bạn</h2>
+        <div id="cartItems">
+            <p class="no-data">Đang tải sản phẩm...</p>
+        </div>
+        
+        <div id="checkoutSection" style="display: none; border-top: 2px dashed #edf2f7; margin-top: 30px; padding-top: 25px;">
+            <h3>📍 Thông tin giao hàng</h3>
+            <div class="checkout-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Địa chỉ nhận hàng</label>
+                    <input type="text" id="address" class="form-control" placeholder="Nhập địa chỉ chi tiết (số nhà, tên đường...)">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Phương thức thanh toán</label>
+                    <select id="payment" class="form-control">
+                        <option value="COD">💵 Thanh toán khi nhận hàng (COD)</option>
+                        <option value="BANKING">💳 Chuyển khoản ngân hàng</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn-pay" onclick="placeOrder()">🚀 XÁC NHẬN ĐẶT HÀNG</button>
+        </div>
+    </div>
+
+    <div class="cart-card">
+        <h2>📜 Lịch sử đơn hàng</h2>
+        <div id="orderHistory">
+            <p class="no-data">Đang tải lịch sử...</p>
+        </div>
+    </div>
+</div>
+<script>
+const API_URL = "http://localhost:8080/api/v1";
+const token = localStorage.getItem('accessToken');
+
+if (!token) {
+    alert("Vui lòng đăng nhập để truy cập giỏ hàng!");
+    window.location.href = 'login.html';
+}
+
+window.onload = () => {
+    loadCart();
+    loadOrderHistory();
+};
+
+// 1. Xem giỏ hàng & Tính toán hiển thị
+async function loadCart() {
+    try {
+        const res = await fetch(`${API_URL}/cart`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) throw new Error("Không thể lấy dữ liệu giỏ hàng");
+
+        const cart = await res.json();
+        const container = document.getElementById('cartItems');
+        const checkout = document.getElementById('checkoutSection');
+
+        const items = cart.items || (Array.isArray(cart) ? cart : []);
+
+        if (items.length === 0) {
+            container.innerHTML = '<div class="no-data">Giỏ hàng trống. <a href="index.html">Quay lại mua sắm</a></div>';
+            if(checkout) checkout.style.display = 'none';
+            updateBadge(0);
+            return;
+        }
+
+        if(checkout) checkout.style.display = 'block';
+        
+        let html = `<table>
+            <tr>
+                <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
+                <th>Sản phẩm</th>
+                <th>Giá</th>
+                <th>Số lượng</th>
+                <th>Tổng</th>
+                <th>Thao tác</th>
+            </tr>`;
+            
+        items.forEach(item => {
+            const price = item.partPrice || item.price || 0;
+            const lineTotal = price * item.quantity;
+
+            html += `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="item-checkbox" value="${item.id}" 
+                               data-total="${lineTotal}" onchange="calculateSelectedTotal()">
+                    </td>
+                    <td><strong>${item.partName}</strong></td>
+                    <td>${price.toLocaleString()} VNĐ</td>
+                    <td>
+                        <input type="number" min="1" value="${item.quantity}" 
+                               onchange="updateQuantity(${item.id}, this.value)">
+                    </td>
+                    <td style="font-weight:bold; color:#e74c3c;">${lineTotal.toLocaleString()} VNĐ</td>
+                    <td><button class="btn-remove" onclick="removeItem(${item.id})">🗑 Xóa</button></td>
+                </tr>`;
+        });
+        
+        html += `</table>
+                <div class="total-section">
+                    <span class="total-price" id="displayTotalPrice">Thành tiền: 0 VNĐ</span>
+                </div>`;
+        
+        container.innerHTML = html;
+        updateBadge(items.length);
+        
+    } catch (e) {
+        console.error("Lỗi loadCart:", e);
+    }
+}
+
+// Logic chọn tất cả checkbox
+function toggleSelectAll(source) {
+    const checkboxes = document.querySelectorAll('.item-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+    calculateSelectedTotal();
+}
+
+// Tính tổng tiền dựa trên các sản phẩm được tích chọn
+function calculateSelectedTotal() {
+    const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+    let total = 0;
+    checkboxes.forEach(cb => {
+        total += parseFloat(cb.getAttribute('data-total'));
+    });
+    document.getElementById('displayTotalPrice').innerText = `Thành tiền: ${total.toLocaleString()} VNĐ`;
+}
+
+// 2. Cập nhật số lượng
+// Ví dụ cách gọi cho hàm UPDATE
+async function updateQuantity(itemId, qty) {
+    const res = await fetch(`${API_URL}/cart/items/${itemId}?quantity=${qty}`, {
+        method: 'PUT', // Dùng PUT như Controller quy định
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) loadCart();
+}
+
+// 3. Xóa sản phẩm
+async function removeItem(itemId) {
+    if (!confirm("Bạn muốn bỏ sản phẩm này khỏi giỏ hàng?")) return;
+    try {
+        await fetch(`${API_URL}/cart/items/${itemId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        loadCart();
+    } catch (e) { console.error(e); }
+}
+
+// 4. Chốt đơn (Chỉ thanh toán các sản phẩm đã chọn)
+async function placeOrder() {
+    const selectedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+    
+    if (selectedCheckboxes.length === 0) {
+        alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
+        return;
+    }
+
+    const selectedIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+    const address = document.getElementById('address').value;
+    const method = document.getElementById('payment').value;
+
+    if (!address.trim()) {
+        alert("Vui lòng cung cấp địa chỉ giao hàng!");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/orders`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            },
+            // Gửi thêm danh sách ID sản phẩm được chọn lên Backend
+            body: JSON.stringify({ 
+                address: address, 
+                paymentMethod: method,
+                cartItemIds: selectedIds 
+            })
+        });
+
+        if (res.ok) {
+            alert("🎉 Đặt hàng thành công các sản phẩm đã chọn!");
+            loadCart();
+            loadOrderHistory();
+            document.getElementById('address').value = "";
+        } else {
+            alert("Lỗi khi chốt đơn. Vui lòng thử lại.");
+        }
+    } catch (e) { console.error(e); }
+}
+
+// 5. Lịch sử đơn hàng (Giữ nguyên logic cũ của bạn)
+async function loadOrderHistory() {
+    try {
+        const res = await fetch(`${API_URL}/orders`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const orders = await res.json();
+        const historyDiv = document.getElementById('orderHistory');
+        
+        if (!orders || orders.length === 0) {
+            historyDiv.innerHTML = '<div class="no-data">Bạn chưa có đơn hàng nào.</div>';
+            return;
+        }
+
+        let html = "";
+        orders.reverse().forEach(o => {
+            const date = o.orderDate ? new Date(o.orderDate).toLocaleDateString('vi-VN') : "Vừa xong";
+            html += `
+                <div class="order-card" onclick="viewOrderDetail(${o.id})">
+                    <div>
+                        <strong>Đơn hàng #${o.id}</strong> <small>(${date})</small><br>
+                        <span class="status-badge">${o.status}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="color:#e74c3c; font-weight:bold;">${o.totalPrice.toLocaleString()} VNĐ</span>
+                    </div>
+                </div>`;
+        });
+        historyDiv.innerHTML = html;
+    } catch (e) { console.error(e); }
+}
+
+// Hàm cập nhật Badge
+function updateBadge(count) {
+    const badge = document.getElementById('cartCount');
+    if (badge) badge.innerText = count;
+    localStorage.setItem('cartCount', count);
+}
+async function viewOrderDetail(orderId) {
+    try {
+        const res = await fetch(`${API_URL}/orders/${orderId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const order = await res.json();
+
+        // Kiểm tra an toàn: Nếu items bị null hoặc undefined, dùng mảng rỗng []
+        const items = order.items || [];
+
+        if (items.length === 0) {
+            alert(`Đơn hàng #${orderId} không có thông tin sản phẩm chi tiết.`);
+            return;
+        }
+
+        let itemDetails = items.map(i => 
+            `- ${i.partName || 'Sản phẩm'} (x${i.quantity}): ${i.unitPrice.toLocaleString()} VNĐ`
+        ).join('\n');
+
+        alert(`CHI TIẾT ĐƠN HÀNG #${orderId}\n` +
+              `--------------------------\n` +
+              `Sản phẩm:\n${itemDetails}\n` +
+              `--------------------------\n` +
+              `TỔNG CỘNG: ${order.totalPrice.toLocaleString()} VNĐ`);
+    } catch (e) {
+        console.error(e);
+        alert("Không thể hiển thị chi tiết đơn hàng.");
+    }
+}
+</script>
+</body>
+</html>

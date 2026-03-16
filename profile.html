@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ cá nhân - WEBOTO</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; }
+        
+        /* Navbar đồng bộ index */
+        .navbar { background: var(--primary); color: white; padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .navbar .logo { font-size: 24px; font-weight: bold; letter-spacing: 1px; }
+        .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 14px; transition: 0.3s; }
+        .nav-links a:hover { color: var(--accent); }
+
+        .container { max-width: 500px; margin: 50px auto; padding: 0 20px; }
+        .profile-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .profile-header { background: linear-gradient(135deg, var(--primary), var(--accent)); padding: 40px 20px; text-align: center; color: white; }
+        .avatar-circle { width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: var(--primary); }
+        
+        .profile-body { padding: 30px; }
+        .info-item { margin-bottom: 20px; }
+        .info-label { font-size: 12px; color: #95a5a6; text-transform: uppercase; font-weight: bold; }
+        .info-value { font-size: 16px; color: var(--primary); font-weight: 500; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 5px; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; text-align: center; text-decoration: none; }
+        .btn-admin { background: var(--primary); color: white; }
+        .btn-admin:hover { opacity: 0.9; }
+        .btn-logout { background: var(--danger); color: white; }
+        .btn-logout:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="logo">WEBOTO</div>
+    <div class="nav-links">
+        <a href="index.html">Trang chủ</a>
+        <a href="cart.html">Giỏ hàng (<span id="cartCount">0</span>)</a>
+        <a href="profile.html">Cá nhân</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="avatar-circle">👤</div>
+            <h2 style="margin:0">Hồ Sơ Của Tôi</h2>
+        </div>
+        <div class="profile-body">
+            <div id="loading">Đang tải dữ liệu...</div>
+            <div id="profileContent" style="display:none">
+                <div id="adminSection" style="display:none; margin-bottom: 20px;">
+                    <a href="admin.html" class="btn btn-admin" style="display:block">⚙️ TRANG QUẢN TRỊ</a>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tên đăng nhập</div>
+                    <div class="info-value" id="username">---</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email liên hệ</div>
+                    <div class="info-value" id="email">---</div>
+                </div>
+                <div class="btn-group">
+                    <button onclick="logout()" class="btn btn-logout">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Giữ nguyên logic JS của bạn, chỉ thêm phần hiển thị badge giỏ hàng
+    window.onload = async () => {
+        const token = localStorage.getItem('accessToken');
+        const roles = JSON.parse(localStorage.getItem('userRole') || '[]');
+        document.getElementById('cartCount').innerText = localStorage.getItem('cartCount') || '0';
+
+        if (!token) { window.location.href = 'login.html'; return; }
+
+        if (roles.includes('ROLE_ADMIN') || roles.includes('ADMIN')) {
+            document.getElementById('adminSection').style.display = 'block';
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/api/v1/users/profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('username').innerText = data.username;
+                document.getElementById('email').innerText = data.email;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('profileContent').style.display = 'block';
+            }
+        } catch (e) { logout(); }
+    };
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+</script>
+</body>
+</html>

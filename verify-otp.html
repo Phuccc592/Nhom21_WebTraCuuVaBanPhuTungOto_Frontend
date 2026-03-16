@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác thực OTP</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Xác Thực OTP</h2>
+        <p>Mã đã được gửi đến email của bạn.</p>
+        <form id="otpForm">
+            <input type="text" id="otpCode" placeholder="Nhập mã OTP 6 số" required>
+            <button type="submit">Xác nhận</button>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+
+        document.getElementById('otpForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('otpCode').value;
+
+            // Gọi API dạng Query Params theo ảnh bạn cung cấp
+            const response = await fetch(`http://localhost:8080/api/v1/auth/verify-otp?username=${username}&code=${code}`, {
+                method: 'POST'
+            });
+
+            const result = await response.text();
+            if (response.ok) {
+                alert(result);
+                window.location.href = 'login.html';
+            } else {
+                document.getElementById('message').innerText = "Mã OTP không đúng!";
+            }
+        };
+    </script>
+</body>
+</html>
